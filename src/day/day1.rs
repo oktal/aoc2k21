@@ -35,17 +35,12 @@ impl Solver for Day1 {
     }
 
     fn solve_part1(&self, lines: Vec<String>) -> SolverResult {
-        parse_depths(lines)
-            .and_then(|d| solve(d.into_iter()))
+        parse_depths(lines).and_then(|d| solve(d.into_iter()))
     }
 
     fn solve_part2(&self, lines: Vec<String>) -> SolverResult {
         let depths = parse_depths(lines)?;
-        let window_sums = 
-            depths
-                .as_slice()
-                .windows(3)
-                .map(|w| w.iter().sum());
+        let window_sums = depths.as_slice().windows(3).map(|w| w.iter().sum());
         solve(window_sums)
     }
 
@@ -53,7 +48,7 @@ impl Solver for Day1 {
         match part {
             1 => "7",
             2 => "5",
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }

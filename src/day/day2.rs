@@ -33,7 +33,7 @@ impl Error for ParseCommandError {}
 enum Command {
     Forward(usize),
     Down(usize),
-    Up(usize)
+    Up(usize),
 }
 
 impl FromStr for Command {
@@ -52,14 +52,16 @@ impl FromStr for Command {
                     return Err(ParseCommandError::Unknown(command.to_string()));
                 }
 
-                let arg = arg.parse::<usize>().map_err(ParseCommandError::ArgumentParseError)?;
+                let arg = arg
+                    .parse::<usize>()
+                    .map_err(ParseCommandError::ArgumentParseError)?;
                 Ok(match command.as_str() {
                     "forward" => Self::Forward(arg),
                     "down" => Self::Down(arg),
                     "up" => Self::Up(arg),
                     _ => unreachable!(),
                 })
-            },
+            }
         }
     }
 }
@@ -74,7 +76,6 @@ trait State {
     /// Mutates the state by applying the `Command`
     fn mutate(&mut self, cmd: &Command);
 
-
     /// Get the `(horizontal position, depth)` tuple
     fn get(&self) -> (usize, usize);
 }
@@ -85,7 +86,7 @@ struct BasicState {
     horizontal: usize,
 
     /// The depth
-    depth: usize
+    depth: usize,
 }
 
 impl State for BasicState {
@@ -93,10 +94,10 @@ impl State for BasicState {
         match cmd {
             Command::Forward(x) => self.horizontal += *x,
             Command::Down(x) => self.depth += *x,
-            Command::Up(x) => self.depth -= *x
+            Command::Up(x) => self.depth -= *x,
         }
     }
-    
+
     fn get(&self) -> (usize, usize) {
         (self.horizontal, self.depth)
     }
@@ -111,7 +112,7 @@ struct AimingState {
     horizontal: usize,
 
     /// The depth
-    depth: usize
+    depth: usize,
 }
 
 impl State for AimingState {
@@ -137,11 +138,9 @@ impl Commands {
             .iter()
             .map(|l| Command::from_str(l.as_str()))
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|e|  SolverError::Generic(e.into()))?;
+            .map_err(|e| SolverError::Generic(e.into()))?;
 
-        Ok(Commands{
-            commands
-        })
+        Ok(Commands { commands })
     }
 
     fn execute_on(&self, state: &mut dyn State) {
@@ -165,7 +164,7 @@ fn solve<S: State + Default>(lines: Vec<String>) -> SolverResult {
 }
 
 impl Solver for Day2 {
-    fn name(&self) ->  &'static str {
+    fn name(&self) -> &'static str {
         "Dive!"
     }
 
@@ -181,7 +180,7 @@ impl Solver for Day2 {
         match part {
             1 => "150",
             2 => "900",
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }

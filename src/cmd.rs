@@ -1,6 +1,6 @@
-use std::vec::Vec;
-use std::string::String;
 use std::str::FromStr;
+use std::string::String;
+use std::vec::Vec;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,7 +14,7 @@ pub(super) enum ParsePathError {
     Empty,
 
     InvalidPath(PathBuf),
-    InvalidIndex(String, std::num::ParseIntError)
+    InvalidIndex(String, std::num::ParseIntError),
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -26,22 +26,24 @@ struct ArgPathFragment {
 impl ArgPathFragment {
     fn parse(s: &str) -> std::result::Result<ArgPathFragment, ParsePathError> {
         if s.is_empty() {
-            return Err(ParsePathError::Empty)
+            return Err(ParsePathError::Empty);
         }
 
         let (prefix, index) = match s.find(|c: char| c.is_ascii_digit()) {
             Some(idx) => {
                 let (prefix, index) = s.split_at(idx);
-                let index = index.parse::<usize>().map_err(|e| ParsePathError::InvalidIndex(s.into(), e))?;
+                let index = index
+                    .parse::<usize>()
+                    .map_err(|e| ParsePathError::InvalidIndex(s.into(), e))?;
 
                 (prefix, Some(index))
-            },
-            None => (s, None)
+            }
+            None => (s, None),
         };
 
-        Ok(ArgPathFragment{
+        Ok(ArgPathFragment {
             prefix: prefix.into(),
-            index
+            index,
         })
     }
 }
@@ -49,7 +51,7 @@ impl ArgPathFragment {
 #[derive(Debug, Clone)]
 struct ArgPath {
     value: String,
-    fragments: Vec<ArgPathFragment>
+    fragments: Vec<ArgPathFragment>,
 }
 
 impl ArgPath {
@@ -63,9 +65,9 @@ impl ArgPath {
             .map(ArgPathFragment::parse)
             .collect::<std::result::Result<Vec<_>, _>>()?;
 
-        Ok(ArgPath{
+        Ok(ArgPath {
             value: s.into(),
-            fragments
+            fragments,
         })
     }
 
@@ -74,13 +76,9 @@ impl ArgPath {
             .as_ref()
             .file_name()
             .and_then(|f| f.to_str())
-            .ok_or(
-                ParsePathError::InvalidPath(PathBuf::from(path.as_ref()))
-            )?;
+            .ok_or(ParsePathError::InvalidPath(PathBuf::from(path.as_ref())))?;
 
-        let mut file_parts: Vec<_> = file_name
-            .split('.')
-            .collect();
+        let mut file_parts: Vec<_> = file_name.split('.').collect();
 
         // Remove the extension from the file name
         file_parts.pop();
@@ -90,9 +88,9 @@ impl ArgPath {
             .map(ArgPathFragment::parse)
             .collect::<std::result::Result<Vec<_>, _>>()?;
 
-        Ok(ArgPath{
+        Ok(ArgPath {
             value: file_name.to_string(),
-            fragments
+            fragments,
         })
     }
 
@@ -104,20 +102,17 @@ impl ArgPath {
         self.fragment(prefix).and_then(|f| f.index)
     }
 
-
     fn disjoint(&self, other: &ArgPath) -> Option<&ArgPathFragment> {
         for i in 0..self.fragments.len() {
             if i >= other.fragments.len() {
                 return Some(&self.fragments[i]);
-            }
-            else if self.fragments[i] != other.fragments[i] {
-                return Some(&self.fragments[i])
+            } else if self.fragments[i] != other.fragments[i] {
+                return Some(&self.fragments[i]);
             }
         }
 
         None
     }
-
 }
 
 impl FromStr for ArgPath {
@@ -126,12 +121,11 @@ impl FromStr for ArgPath {
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         ArgPath::parse(s)
     }
-
 }
 
 #[derive(Debug)]
 pub(super) struct CommonArgs {
-    path: ArgPath
+    path: ArgPath,
 }
 
 #[derive(Debug)]
@@ -160,22 +154,12 @@ pub(super) type Result<T> = std::result::Result<T, Error>;
 fn read_input_files<P: AsRef<Path>>(path: P) -> Result<Vec<PathBuf>> {
     let mut input_files: Vec<PathBuf> = Vec::new();
 
-    let entry_iter = fs::read_dir(path.as_ref()).map_err(
-        |e|
-            Error::ReadInputDirectory(
-                PathBuf::from(path.as_ref()),
-                e
-            )
-        )?;
+    let entry_iter = fs::read_dir(path.as_ref())
+        .map_err(|e| Error::ReadInputDirectory(PathBuf::from(path.as_ref()), e))?;
 
     for entry in entry_iter {
-        let entry = entry.map_err(
-            |e|
-                Error::ReadInputDirectory(
-                    PathBuf::from(path.as_ref()),
-                    e
-                )
-            )?;
+        let entry =
+            entry.map_err(|e| Error::ReadInputDirectory(PathBuf::from(path.as_ref()), e))?;
         let path = entry.path();
 
         if path.is_file() {
@@ -189,7 +173,7 @@ fn read_input_files<P: AsRef<Path>>(path: P) -> Result<Vec<PathBuf>> {
 #[derive(Eq, PartialEq)]
 enum FileType {
     Input,
-    Test
+    Test,
 }
 
 fn get_file_type(path: &ArgPath) -> Option<FileType> {
@@ -208,9 +192,7 @@ fn get_file_type(path: &ArgPath) -> Option<FileType> {
 
 impl Command {
     pub(super) fn parse_from_args() -> Result<Self> {
-        let args = std::env::args()
-            .skip(1)
-            .collect::<Vec<_>>();
+        let args = std::env::args().skip(1).collect::<Vec<_>>();
         Self::parse(args)
     }
 
@@ -226,27 +208,26 @@ impl Command {
         let path = args
             .get(1)
             .ok_or(Error::MissingPath(command.clone()))
-            .and_then(
-                |p|
-                    ArgPath::from_str(p.as_str()).map_err(Error::InvalidPath)
-            )?;
+            .and_then(|p| ArgPath::from_str(p.as_str()).map_err(Error::InvalidPath))?;
 
-        let args = CommonArgs{path};
+        let args = CommonArgs { path };
         Ok(match command.as_str() {
             "test" => Command::Test(args),
             "solve" => Command::Solve(args),
-            _ => unreachable!()
-
+            _ => unreachable!(),
         })
     }
 
-    fn args(&self) -> &CommonArgs  {
+    fn args(&self) -> &CommonArgs {
         match self {
             Self::Solve(args) | Self::Test(args) => args,
         }
     }
 
-    fn resolve_input_files<P: AsRef<Path>>(&self, prefix_path: P) -> Result<Vec<(ArgPath, PathBuf)>> {
+    fn resolve_input_files<P: AsRef<Path>>(
+        &self,
+        prefix_path: P,
+    ) -> Result<Vec<(ArgPath, PathBuf)>> {
         let args = self.args();
 
         let arg_fragment = args.path.fragment_index("part");
@@ -260,17 +241,18 @@ impl Command {
             if let Some(file_type) = get_file_type(&file_path) {
                 if let Some(fragment) = file_path.disjoint(&args.path) {
                     if fragment.prefix == "part" {
-                        if file_type == FileType::Test && !is_test ||
-                           file_type == FileType::Input && is_test {
+                        if file_type == FileType::Test && !is_test
+                            || file_type == FileType::Input && is_test
+                        {
                             continue;
                         }
 
                         match (arg_fragment, fragment.index) {
-                            (Some(arg_fragment), Some(fragment)) if arg_fragment == fragment  => {
+                            (Some(arg_fragment), Some(fragment)) if arg_fragment == fragment => {
                                 input_files.push((file_path, file.to_path_buf()));
-                            },
+                            }
                             (None, _) => input_files.push((file_path, file.to_path_buf())),
-                            _ => {},
+                            _ => {}
                         };
                     } else if fragment.prefix == "input" && !is_test {
                         input_files.push((file_path, file.to_path_buf()));
@@ -297,8 +279,8 @@ impl Command {
         } else {
             for (path, input_file) in &input_files {
                 let day_index = path
-                        .fragment_index("day")
-                        .ok_or(Error::ResolvePath(input_file.to_path_buf()))?;
+                    .fragment_index("day")
+                    .ok_or(Error::ResolvePath(input_file.to_path_buf()))?;
 
                 let part_index = path
                     .fragment_index("part")
@@ -313,14 +295,29 @@ impl Command {
                         let result = day::solve(input_file, day_index, part_index)
                             .map_err(|e| Error::SolverError(input_file.to_path_buf(), e))?;
 
-                        println!("Solved Day {} ({}) - Part {} [{:?}] -> {}   [{:?}]", day_index, name, part_index, input_file, result, start.elapsed());
-
-                    },
+                        println!(
+                            "Solved Day {} ({}) - Part {} [{:?}] -> {}   [{:?}]",
+                            day_index,
+                            name,
+                            part_index,
+                            input_file,
+                            result,
+                            start.elapsed()
+                        );
+                    }
                     Command::Test(_) => {
                         match day::test(input_file, day_index, part_index) {
                             Ok(result) => {
-                                println!("Test - Day {} ({}) - Part {} [{:?}]   [OK]  ({})   [{:?}]", day_index, name, part_index, input_file, result, start.elapsed());
-                            },
+                                println!(
+                                    "Test - Day {} ({}) - Part {} [{:?}]   [OK]  ({})   [{:?}]",
+                                    day_index,
+                                    name,
+                                    part_index,
+                                    input_file,
+                                    result,
+                                    start.elapsed()
+                                );
+                            }
                             Err(e) => {
                                 println!("Test - Day {} ({}) - Part {} [{:?}]   [FAILED]  ({:?})   [{:?}]", day_index, name, part_index, input_file, e, start.elapsed());
                             }
