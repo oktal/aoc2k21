@@ -4,12 +4,6 @@ use std::result::Result;
 
 struct Day1;
 
-impl Day1 {
-    pub(super) fn new() -> Box<Day1> {
-        Box::new(Day1{})
-    }
-}
-
 fn solve(depths: impl Iterator<Item = u64>) -> SolverResult {
     let mut increase_count = 0usize;
     let mut previous: Option<u64> = None;
@@ -65,5 +59,5 @@ impl Solver for Day1 {
 }
 
 pub(super) fn new() -> Box<dyn Solver> {
-    Day1::new()
+    Box::new(Day1)
 }

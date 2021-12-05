@@ -5,6 +5,8 @@ use std::str::FromStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use std::time;
+
 use crate::day;
 
 #[derive(Debug)]
@@ -304,21 +306,23 @@ impl Command {
 
                 let name = day::name(day_index).unwrap_or("Unknown");
 
+                let start = time::Instant::now();
+
                 match self {
                     Command::Solve(_) => {
                         let result = day::solve(input_file, day_index, part_index)
                             .map_err(|e| Error::SolverError(input_file.to_path_buf(), e))?;
 
-                        println!("Solved Day {} ({}) - Part {} [{:?}] -> {}", day_index, name, part_index, input_file, result);
+                        println!("Solved Day {} ({}) - Part {} [{:?}] -> {}   [{:?}]", day_index, name, part_index, input_file, result, start.elapsed());
 
                     },
                     Command::Test(_) => {
                         match day::test(input_file, day_index, part_index) {
                             Ok(result) => {
-                                println!("Test - Day {} ({}) - Part {} [{:?}]   [OK]  ({})", day_index, name, part_index, input_file, result);
+                                println!("Test - Day {} ({}) - Part {} [{:?}]   [OK]  ({})   [{:?}]", day_index, name, part_index, input_file, result, start.elapsed());
                             },
                             Err(e) => {
-                                println!("Test - Day {} ({}) - Part {} [{:?}]   [FAILED]  ({:?})", day_index, name, part_index, input_file, e);
+                                println!("Test - Day {} ({}) - Part {} [{:?}]   [FAILED]  ({:?})   [{:?}]", day_index, name, part_index, input_file, e, start.elapsed());
                             }
                         }
                     }
