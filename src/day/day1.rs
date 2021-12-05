@@ -2,7 +2,7 @@ use super::{Solver, SolverError, SolverResult};
 
 use std::result::Result;
 
-pub(super) struct Day1;
+struct Day1;
 
 impl Day1 {
     pub(super) fn new() -> Box<Day1> {
@@ -36,6 +36,10 @@ fn parse_depths(lines: Vec<String>) -> Result<Vec<u64>, SolverError> {
 }
 
 impl Solver for Day1 {
+    fn name(&self) -> &'static str {
+        "Sonar Sweep"
+    }
+
     fn solve_part1(&self, lines: Vec<String>) -> SolverResult {
         parse_depths(lines)
             .and_then(|d| solve(d.into_iter()))
@@ -51,10 +55,6 @@ impl Solver for Day1 {
         solve(window_sums)
     }
 
-    fn name(&self) -> &'static str {
-        "Sonar Sweep"
-    }
-
     fn test_expected(&self, part: usize) -> &'static str {
         match part {
             1 => "7",
@@ -62,4 +62,8 @@ impl Solver for Day1 {
             _ => unreachable!()
         }
     }
+}
+
+pub(super) fn new() -> Box<dyn Solver> {
+    Day1::new()
 }
