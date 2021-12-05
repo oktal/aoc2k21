@@ -5,6 +5,8 @@ use std::str::FromStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::day;
+
 #[derive(Debug)]
 pub(super) enum ParsePathError {
     Empty,
@@ -13,7 +15,7 @@ pub(super) enum ParsePathError {
     InvalidIndex(String, std::num::ParseIntError)
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct ArgPathFragment {
     prefix: String,
     index: Option<usize>,
@@ -39,11 +41,10 @@ impl ArgPathFragment {
             prefix: prefix.into(),
             index
         })
-
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ArgPath {
     value: String,
     fragments: Vec<ArgPathFragment>
@@ -93,6 +94,15 @@ impl ArgPath {
         })
     }
 
+    fn fragment(&self, prefix: &str) -> Option<&ArgPathFragment> {
+        self.fragments.iter().find(|&f| f.prefix == prefix)
+    }
+
+    fn fragment_index(&self, prefix: &str) -> Option<usize> {
+        self.fragment(prefix).and_then(|f| f.index)
+    }
+
+
     fn disjoint(&self, other: &ArgPath) -> Option<&ArgPathFragment> {
         for i in 0..self.fragments.len() {
             if i >= other.fragments.len() {
@@ -130,7 +140,11 @@ pub(super) enum Error {
     InvalidCommand(String),
     InvalidPath(ParsePathError),
 
+    ResolvePath(PathBuf),
+
     ReadInputDirectory(PathBuf, std::io::Error),
+
+    SolverError(PathBuf, day::SolverError),
 }
 
 #[derive(Debug)]
@@ -168,6 +182,26 @@ fn read_input_files<P: AsRef<Path>>(path: P) -> Result<Vec<PathBuf>> {
     }
 
     Ok(input_files)
+}
+
+#[derive(Eq, PartialEq)]
+enum FileType {
+    Input,
+    Test
+}
+
+fn get_file_type(path: &ArgPath) -> Option<FileType> {
+    for fragment in &path.fragments {
+        let prefix = fragment.prefix.to_lowercase();
+
+        if prefix == "input" {
+            return Some(FileType::Input);
+        } else if prefix == "test" {
+            return Some(FileType::Test);
+        }
+    }
+
+    None
 }
 
 impl Command {
@@ -210,26 +244,88 @@ impl Command {
         }
     }
 
-    pub(super) fn resolve_input_files<P: AsRef<Path>>(&self, prefix_path: P) -> Result<Vec<PathBuf>> {
+    fn resolve_input_files<P: AsRef<Path>>(&self, prefix_path: P) -> Result<Vec<(ArgPath, PathBuf)>> {
         let args = self.args();
 
-        let mut input_files = Vec::new();
-
+        let arg_fragment = args.path.fragment_index("part");
         let is_test = matches!(self, Self::Test(_));
+
+        let mut input_files = Vec::new();
 
         let files = read_input_files(prefix_path)?;
         for file in &files {
             let file_path = ArgPath::parse_path(&file).map_err(Error::InvalidPath)?;
+            if let Some(file_type) = get_file_type(&file_path) {
+                if let Some(fragment) = file_path.disjoint(&args.path) {
+                    if fragment.prefix == "part" {
+                        if file_type == FileType::Test && !is_test ||
+                           file_type == FileType::Input && is_test {
+                            continue;
+                        }
 
-            if let Some(fragment) = file_path.disjoint(&args.path) {
-                if fragment.prefix == "test" && is_test {
-                    input_files.push(file.to_path_buf());
+                        match (arg_fragment, fragment.index) {
+                            (Some(arg_fragment), Some(fragment)) if arg_fragment == fragment  => {
+                                input_files.push((file_path, file.to_path_buf()));
+                            },
+                            (None, _) => input_files.push((file_path, file.to_path_buf())),
+                            _ => {},
+                        };
+                    } else if fragment.prefix == "input" && !is_test {
+                        input_files.push((file_path, file.to_path_buf()));
+                    } else if fragment.prefix == "test" && is_test {
+                        input_files.push((file_path, file.to_path_buf()));
+                    }
+                } else {
+                    input_files.push((file_path, file.to_path_buf()));
                 }
             } else {
-                input_files.push(file.to_path_buf());
+                println!("WARN skipping file with unknown type {:?}", file);
             }
         }
 
         Ok(input_files)
+    }
+
+    pub(super) fn run(&self, prefix_path: impl AsRef<Path>) -> Result<()> {
+        let input_files = self.resolve_input_files(prefix_path)?;
+
+        if input_files.is_empty() {
+            let args = self.args();
+            println!("Could not find any input files for {}", args.path.value);
+        } else {
+            for (path, input_file) in &input_files {
+                let day_index = path
+                        .fragment_index("day")
+                        .ok_or(Error::ResolvePath(input_file.to_path_buf()))?;
+
+                let part_index = path
+                    .fragment_index("part")
+                    .ok_or(Error::ResolvePath(input_file.to_path_buf()))?;
+
+                let name = day::name(day_index).unwrap_or("Unknown");
+
+                match self {
+                    Command::Solve(_) => {
+                        let result = day::solve(input_file, day_index, part_index)
+                            .map_err(|e| Error::SolverError(input_file.to_path_buf(), e))?;
+
+                        println!("Solved Day {} ({}) - Part {} [{:?}] -> {}", day_index, name, part_index, input_file, result);
+
+                    },
+                    Command::Test(_) => {
+                        match day::test(input_file, day_index, part_index) {
+                            Ok(result) => {
+                                println!("Test - Day {} ({}) - Part {} [{:?}]   [OK]  ({})", day_index, name, part_index, input_file, result);
+                            },
+                            Err(e) => {
+                                println!("Test - Day {} ({}) - Part {} [{:?}]   [FAILED]  ({:?})", day_index, name, part_index, input_file, e);
+                            }
+                        }
+                    }
+                };
+            }
+        }
+
+        Ok(())
     }
 }

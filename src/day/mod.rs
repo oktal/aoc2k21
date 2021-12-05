@@ -1,7 +1,7 @@
 use std::vec::Vec;
 use std::string::String;
 use std::fs;
-use std::io::{self, BufReader};
+use std::io::BufReader;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
@@ -10,9 +10,12 @@ use std::error::Error;
 
 use std::iter::Iterator;
 
+mod day1;
+
 #[derive(Debug)]
 pub(super) enum SolverError {
-    Invalid,
+    UnknownDay(usize),
+    InvalidPart(usize),
 
     InputFile(PathBuf, std::io::Error),
 
@@ -27,43 +30,24 @@ pub(super) enum SolverError {
 type SolverResult = Result<String, SolverError>;
 
 pub(super) trait Solver {
-    fn solve(&self, lines: Vec<String>) -> SolverResult;
+    fn name(&self) -> &'static str;
 
-    fn test_expected(&self) -> &'static str;
-}
+    fn solve_part1(&self, lines: Vec<String>) -> SolverResult;
 
-pub(super) struct Day0 {
-}
+    fn solve_part2(&self, lines: Vec<String>) -> SolverResult;
 
-impl Day0 {
-    pub(super) fn new() -> Box<Day0> {
-        Box::new(Day0{})
-    }
-}
-
-impl Solver for Day0 {
-    fn solve(&self, lines: Vec<String>) -> SolverResult {
-        let lines = lines
-            .iter()
-            .map(
-                |s|
-                    s.parse::<i64>()
-                    .map_err(
-                        |e|
-                            SolverError::Generic(e.into())
-                    )
-            )
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(lines.iter().sum::<i64>().to_string())
-    }
-
-    fn test_expected(&self) -> &'static str {
-        "5"
-    }
+    fn test_expected(&self, part: usize) -> &'static str;
 }
 
 struct PreparedSolver<'a>(Vec<String>, &'a Box<dyn Solver>);
+
+pub (super) fn name(day: usize) -> Option<&'static str> {
+    let days:  &[Box<dyn Solver>] = &[
+        day1::Day1::new(),
+    ];
+
+    days.get(day - 1).map(|d| d.name())
+}
 
 fn prepare_solver<
         P: AsRef<Path>,
@@ -72,7 +56,7 @@ fn prepare_solver<
     (path: P, day: usize, f: Fn) -> SolverResult {
 
     let days:  &[Box<dyn Solver>] = &[
-        Day0::new()
+        day1::Day1::new(),
     ];
 
     let file = fs::File::open(path.as_ref()).map_err(
@@ -94,19 +78,31 @@ fn prepare_solver<
         )?;
 
     days
-        .get(day)
-        .ok_or(SolverError::Invalid)
+        .get(day - 1)
+        .ok_or(SolverError::UnknownDay(day))
         .and_then(|s| f(PreparedSolver(lines, s)))
 }
 
-
-pub(super) fn solve<P: AsRef<Path>>(path: P, day: usize) -> SolverResult {
-    prepare_solver(path, day, |s| s.1.solve(s.0))
+fn run_solver<'a>(solver: PreparedSolver<'a>, part: usize) -> SolverResult {
+    match part {
+        1 => solver.1.solve_part1(solver.0),
+        2 => solver.1.solve_part2(solver.0),
+        _ => Err(SolverError::InvalidPart(part))
+    }
 }
 
-fn run_test<'a>(solver: PreparedSolver<'a>) -> SolverResult {
-    let expected = solver.1.test_expected();
-    let result = solver.1.solve(solver.0)?;
+
+pub(super) fn solve<P: AsRef<Path>>(path: P, day: usize, part: usize) -> SolverResult {
+    prepare_solver(path, day, |s| run_solver(s, part))
+}
+
+fn run_test<'a>(solver: PreparedSolver<'a>, part: usize) -> SolverResult {
+    let expected = solver.1.test_expected(part);
+    let result = if part == 1 {
+        solver.1.solve_part1(solver.0)
+    } else {
+        solver.1.solve_part2(solver.0)
+    }?;
 
     if result == expected {
         Ok(result)
@@ -118,7 +114,7 @@ fn run_test<'a>(solver: PreparedSolver<'a>) -> SolverResult {
     }
 }
 
-pub(super) fn test<P: AsRef<Path>>(path: P, day: usize) -> SolverResult {
-    prepare_solver(path, day, run_test)
+pub(super) fn test<P: AsRef<Path>>(path: P, day: usize, part: usize) -> SolverResult {
+    prepare_solver(path, day, |s| run_test(s,  part))
 }
 
