@@ -236,7 +236,7 @@ mod bingo {
                 cells: &self.state.cells.as_slice(),
                 row: row,
                 rows: self.state.rows,
-                current: 0
+                current: 0,
             }
         }
 
@@ -245,7 +245,7 @@ mod bingo {
                 cells: &self.state.cells.as_slice(),
                 column: column,
                 columns: self.state.columns,
-                current: 0
+                current: 0,
             }
         }
     }
@@ -258,7 +258,7 @@ mod bingo {
 }
 
 // Play and return the scores of winning boards by order
-fn play(lines: Vec<String>) -> Result<Vec<u32>, SolverError>  {
+fn play(lines: Vec<String>) -> Result<Vec<u32>, SolverError> {
     let game = lines[0]
         .split(',')
         .map(|x| x.parse::<u32>())
@@ -272,8 +272,8 @@ fn play(lines: Vec<String>) -> Result<Vec<u32>, SolverError>  {
         if split.is_empty() {
             continue;
         }
-        let board = bingo::Board::parse(Vec::from(split))
-            .map_err(|e| SolverError::Generic(e.into()))?;
+        let board =
+            bingo::Board::parse(Vec::from(split)).map_err(|e| SolverError::Generic(e.into()))?;
         boards.push(board)
     }
 
@@ -285,7 +285,7 @@ fn play(lines: Vec<String>) -> Result<Vec<u32>, SolverError>  {
         for board in boards.into_iter() {
             match board.draw(g) {
                 bingo::Drawn::Again(b) => new_boards.push(b),
-                bingo::Drawn::Won(b) => scores.push(b.score() * g)
+                bingo::Drawn::Won(b) => scores.push(b.score() * g),
             };
         }
 
@@ -304,7 +304,9 @@ impl Solver for Day4 {
         let scores = play(lines)?;
         scores
             .get(0)
-            .ok_or(SolverError::Generic("Could not determine a winner board".into()))
+            .ok_or(SolverError::Generic(
+                "Could not determine a winner board".into(),
+            ))
             .map(|s| s.to_string())
     }
 
@@ -314,7 +316,9 @@ impl Solver for Day4 {
         let last = if len > 0 { len - 1 } else { 0 };
         scores
             .get(last)
-            .ok_or(SolverError::Generic("Could not determine a winner board".into()))
+            .ok_or(SolverError::Generic(
+                "Could not determine a winner board".into(),
+            ))
             .map(|s| s.to_string())
     }
 

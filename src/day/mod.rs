@@ -14,6 +14,8 @@ mod day1;
 mod day2;
 mod day3;
 mod day4;
+mod day5;
+mod day6;
 
 #[derive(Debug)]
 pub(super) enum SolverError {
@@ -42,7 +44,14 @@ pub(super) trait Solver {
 struct PreparedSolver<'a>(Vec<String>, &'a Box<dyn Solver>);
 
 pub(super) fn name(day: usize) -> Option<&'static str> {
-    let days: &[Box<dyn Solver>] = &[day1::new(), day2::new(), day3::new(), day4::new()];
+    let days: &[Box<dyn Solver>] = &[
+        day1::new(),
+        day2::new(),
+        day3::new(),
+        day4::new(),
+        day5::new(),
+        day6::new(),
+    ];
 
     days.get(day - 1).map(|d| d.name())
 }
@@ -52,7 +61,14 @@ fn prepare_solver<P: AsRef<Path>, Fn: FnOnce(PreparedSolver) -> SolverResult>(
     day: usize,
     f: Fn,
 ) -> SolverResult {
-    let days: &[Box<dyn Solver>] = &[day1::new(), day2::new(), day3::new(), day4::new()];
+    let days: &[Box<dyn Solver>] = &[
+        day1::new(),
+        day2::new(),
+        day3::new(),
+        day4::new(),
+        day5::new(),
+        day6::new(),
+    ];
 
     let file = fs::File::open(path.as_ref())
         .map_err(|e| SolverError::InputFile(PathBuf::from(path.as_ref()), e))?;
