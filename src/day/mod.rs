@@ -17,6 +17,7 @@ mod day4;
 mod day5;
 mod day6;
 mod day7;
+mod day8;
 
 #[derive(Debug)]
 pub(super) enum SolverError {
@@ -53,6 +54,7 @@ pub(super) fn name(day: usize) -> Option<&'static str> {
         day5::new(),
         day6::new(),
         day7::new(),
+        day8::new(),
     ];
 
     days.get(day - 1).map(|d| d.name())
@@ -71,6 +73,7 @@ fn prepare_solver<P: AsRef<Path>, Fn: FnOnce(PreparedSolver) -> SolverResult>(
         day5::new(),
         day6::new(),
         day7::new(),
+        day8::new(),
     ];
 
     let file = fs::File::open(path.as_ref())
