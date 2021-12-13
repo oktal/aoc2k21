@@ -194,7 +194,6 @@ fn solve_entry(entry: &Entry) -> u64 {
         }
 
         for (digit, patterns) in &mut unsolved {
-
             if patterns.len() == 1 {
                 let mut pattern = patterns[0].clone();
                 pattern.value = Some(*digit);
@@ -203,7 +202,14 @@ fn solve_entry(entry: &Entry) -> u64 {
                 continue;
             }
 
-            let ps = patterns.iter().filter(|&p1| solved.iter().find(|&p2| p1.wiring.segments == p2.wiring.segments).is_none());
+            let ps = patterns
+                .iter()
+                .filter(|&p1| {
+                    solved
+                        .iter()
+                        .find(|&p2| p1.wiring.segments == p2.wiring.segments)
+                        .is_none()
+                });
 
 
             let mut possible = Vec::new();
