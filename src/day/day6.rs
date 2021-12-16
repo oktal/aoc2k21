@@ -7,7 +7,7 @@ struct Day6;
 
 #[derive(Debug)]
 struct LanternFish {
-    timer: u64
+    timer: u64,
 }
 
 const FISHY: usize = 409664;
@@ -26,14 +26,16 @@ struct Spawns {
     index: usize,
 }
 
-
 impl Spawns {
     fn new() -> Spawns {
-        Spawns { timers: [0u8; FISHY], index: 0 }
+        Spawns {
+            timers: [0u8; FISHY],
+            index: 0,
+        }
     }
 
     fn add(&mut self, timer: u8) -> Option<()> {
-        if self.is_full()  {
+        if self.is_full() {
             return None;
         }
 
@@ -71,7 +73,6 @@ impl Spawns {
         }
     }
 
-
     fn is_empty(&self) -> bool {
         self.index == 0
     }
@@ -83,16 +84,19 @@ impl Spawns {
     fn into_fish(self) -> BinaryLanternFish {
         BinaryLanternFish {
             timers: self.timers,
-            len: self.index
+            len: self.index,
         }
     }
 }
 
 impl BinaryLanternFish {
     fn from(timers: &[u8]) -> BinaryLanternFish {
-        BinaryLanternFish { timers: timers.try_into().unwrap(), len: timers.len() }
+        BinaryLanternFish {
+            timers: timers.try_into().unwrap(),
+            len: timers.len(),
+        }
     }
-    
+
     fn count(&self) -> usize {
         self.len
     }
@@ -130,7 +134,7 @@ const FISH_RESET_TIMER: u64 = 6;
 
 impl LanternFish {
     pub fn with_timer(timer: u64) -> LanternFish {
-        LanternFish {  timer }
+        LanternFish { timer }
     }
 
     pub fn spawn(&mut self) -> Option<LanternFish> {
@@ -147,18 +151,12 @@ impl LanternFish {
 fn solve_v1(lines: Vec<String>, days: usize) -> SolverResult {
     let mut fishes = lines[0]
         .split(',')
-        .map(|s| {
-            s.parse::<u64>().map(|x| LanternFish::with_timer(x))
-        })
+        .map(|s| s.parse::<u64>().map(|x| LanternFish::with_timer(x)))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| SolverError::Generic(e.into()))?;
 
     (0..days).for_each(|d| {
-        let new_fishes: Vec<_> = 
-            fishes
-            .iter_mut()
-            .filter_map(|f|  f.spawn())
-            .collect();
+        let new_fishes: Vec<_> = fishes.iter_mut().filter_map(|f| f.spawn()).collect();
         fishes.extend(new_fishes);
     });
 
@@ -166,11 +164,9 @@ fn solve_v1(lines: Vec<String>, days: usize) -> SolverResult {
 }
 
 fn solve_v2(lines: Vec<String>, days: usize) -> SolverResult {
-    let values  = lines[0]
+    let values = lines[0]
         .split(',')
-        .map(|s| {
-            s.parse::<u8>()
-        })
+        .map(|s| s.parse::<u8>())
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| SolverError::Generic(e.into()))?;
 
@@ -178,7 +174,7 @@ fn solve_v2(lines: Vec<String>, days: usize) -> SolverResult {
 
     let mut cur_spawns = Spawns::new();
     for value in values {
-       cur_spawns.add(value);
+        cur_spawns.add(value);
     }
 
     fishes.push(cur_spawns.into_fish());

@@ -7,7 +7,7 @@ struct Heightmap {
 
     rows: usize,
 
-    columns: usize
+    columns: usize,
 }
 
 impl Heightmap {
@@ -47,18 +47,17 @@ impl Heightmap {
                     } else {
                         Some((x, y))
                     }
-                },
-                _ => None
+                }
+                _ => None,
             }
         })
     }
 }
 
 fn parse_line(line: &str) -> Option<Vec<u32>> {
-    line
-    .chars()
-    .map(|c| c.to_digit(10))
-    .collect::<Option<Vec<u32>>>()
+    line.chars()
+        .map(|c| c.to_digit(10))
+        .collect::<Option<Vec<u32>>>()
 }
 
 fn parse_heightmap(lines: Vec<String>) -> Result<Heightmap, SolverError> {
@@ -78,8 +77,14 @@ fn parse_heightmap(lines: Vec<String>) -> Result<Heightmap, SolverError> {
     })
 }
 
-fn walk_basin_rec(map: &Heightmap, x: usize, y: usize, previous: u32, walked: &mut HashSet<(usize, usize)>) {
-    let adj_indexes = map.get_adj_index(x, y); 
+fn walk_basin_rec(
+    map: &Heightmap,
+    x: usize,
+    y: usize,
+    previous: u32,
+    walked: &mut HashSet<(usize, usize)>,
+) {
+    let adj_indexes = map.get_adj_index(x, y);
     for adj_index in adj_indexes {
         if let Some(index) = adj_index {
             let value = map.position_at(index.0, index.1);
@@ -115,13 +120,10 @@ impl Solver for Day9 {
                 let current = heightmap.position_at(i, j);
                 let adj_index = heightmap.get_adj_index(i, j);
 
-                let mut adj_values = adj_index.map(|idx| {
-                    idx.map(|(x, y)| heightmap.position_at(x, y))
-                });
+                let mut adj_values =
+                    adj_index.map(|idx| idx.map(|(x, y)| heightmap.position_at(x, y)));
 
-                let is_low = adj_values.all(|x| {
-                    x.map(|v| current < v).unwrap_or(true)
-                });
+                let is_low = adj_values.all(|x| x.map(|v| current < v).unwrap_or(true));
 
                 if is_low {
                     res += (current + 1) as u64;
@@ -142,13 +144,10 @@ impl Solver for Day9 {
                 let current = heightmap.position_at(i, j);
                 let adj_index = heightmap.get_adj_index(i, j);
 
-                let mut adj_values = adj_index.map(|idx| {
-                    idx.map(|(x, y)| heightmap.position_at(x, y))
-                });
+                let mut adj_values =
+                    adj_index.map(|idx| idx.map(|(x, y)| heightmap.position_at(x, y)));
 
-                let is_low = adj_values.all(|x| {
-                    x.map(|v| current < v).unwrap_or(true)
-                });
+                let is_low = adj_values.all(|x| x.map(|v| current < v).unwrap_or(true));
 
                 if is_low {
                     let len = walk_basin(&heightmap, i, j, current);
@@ -156,7 +155,6 @@ impl Solver for Day9 {
                 }
             }
         }
-
 
         basins.sort();
         let res = basins.iter().rev().take(3).fold(1, |acc, x| acc * x);

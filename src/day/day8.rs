@@ -1,6 +1,6 @@
 use super::{Solver, SolverError, SolverResult};
-use std::convert::TryFrom;
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::fmt;
 use std::str::FromStr;
 
@@ -45,22 +45,24 @@ impl TryFrom<char> for Segment {
             'e' => Ok(Self::E),
             'f' => Ok(Self::F),
             'g' => Ok(Self::G),
-            _ => Err(Error::InvalidSegment(c))
+            _ => Err(Error::InvalidSegment(c)),
         }
     }
 }
 
 #[derive(Debug, Clone)]
 struct Wiring {
-    segments: Vec<Segment>
+    segments: Vec<Segment>,
 }
 
 impl FromStr for Wiring {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let segments =
-            s.chars().map(Segment::try_from).collect::<Result<Vec<_>, _>>()?;
+        let segments = s
+            .chars()
+            .map(Segment::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(Wiring { segments })
     }
 }
@@ -68,7 +70,7 @@ impl FromStr for Wiring {
 #[derive(Debug, Clone)]
 struct Digit {
     wiring: Wiring,
-    value: Option<u32>
+    value: Option<u32>,
 }
 
 impl Digit {
@@ -88,7 +90,7 @@ impl Digit {
             }
         }
 
-        common 
+        common
     }
 }
 
@@ -96,24 +98,25 @@ impl FromStr for Digit {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let segments =
-            s.chars().map(Segment::try_from).collect::<Result<Vec<_>, _>>()?;
+        let segments = s
+            .chars()
+            .map(Segment::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
 
         let value = match segments.len() {
             1 => Err(Error::InvalidWiring(s.to_owned())),
             2 => Ok(Some(1)), // Only 1 has 2 segments
-            3 => Ok(Some(7)), // Only 7 has 3 segments 
+            3 => Ok(Some(7)), // Only 7 has 3 segments
             4 => Ok(Some(4)), // Only 4 has 4 segments
-            5 => Ok(None), // Can be 2, 3, 5
-            6 => Ok(None), // Can be 0, 6, 9 
+            5 => Ok(None),    // Can be 2, 3, 5
+            6 => Ok(None),    // Can be 0, 6, 9
             7 => Ok(Some(8)), // Only 8 has 7 segments
             _ => Err(Error::InvalidWiring(s.to_owned())),
         }?;
 
-
         Ok(Digit {
             wiring: Wiring { segments },
-            value
+            value,
         })
     }
 }
@@ -121,38 +124,37 @@ impl FromStr for Digit {
 #[derive(Debug)]
 struct Entry {
     pattern: Vec<Digit>,
-    output: Vec<Digit>
+    output: Vec<Digit>,
 }
 
 impl FromStr for Entry {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut split = s
-            .split('|')
-            .into_iter();
+        let mut split = s.split('|').into_iter();
 
         let pattern = split.next().ok_or(Error::MissingInput)?;
         let output = split.next().ok_or(Error::MissingOutput)?;
 
-        let pattern =
-            pattern.split(' ').filter(|x| !x.is_empty()).map(Digit::from_str).collect::<Result<Vec<_>, _>>()?;
+        let pattern = pattern
+            .split(' ')
+            .filter(|x| !x.is_empty())
+            .map(Digit::from_str)
+            .collect::<Result<Vec<_>, _>>()?;
 
-        let output =
-            output.split(' ').filter(|x| !x.is_empty()).map(Digit::from_str).collect::<Result<Vec<_>, _>>()?;
+        let output = output
+            .split(' ')
+            .filter(|x| !x.is_empty())
+            .map(Digit::from_str)
+            .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Entry { pattern, output })
     }
 }
 
-
 fn solve_entry(entry: &Entry) -> u64 {
     let mut known_digits = {
-        let known_digits =
-            entry
-            .pattern
-            .iter()
-            .filter(|p| p.value.is_some());
+        let known_digits = entry.pattern.iter().filter(|p| p.value.is_some());
 
         let mut groups = HashMap::new();
         for d in known_digits {
@@ -163,23 +165,24 @@ fn solve_entry(entry: &Entry) -> u64 {
     };
 
     let mut unsolved = {
-        let unsolved =
-            entry
-            .pattern
-            .iter()
-            .filter(|p| p.value.is_none());
+        let unsolved = entry.pattern.iter().filter(|p| p.value.is_none());
 
         let mut groups = HashMap::new();
         for d in unsolved {
             let len = d.wiring.segments.len();
             if len == 5 {
                 for v in &[2, 3, 5] {
-                    groups.entry(*v as u32).or_insert(Vec::new()).push(d.clone());
+                    groups
+                        .entry(*v as u32)
+                        .or_insert(Vec::new())
+                        .push(d.clone());
                 }
-            }
-            else if len == 6 {
+            } else if len == 6 {
                 for v in &[0, 6, 9] {
-                    groups.entry(*v as u32).or_insert(Vec::new()).push(d.clone());
+                    groups
+                        .entry(*v as u32)
+                        .or_insert(Vec::new())
+                        .push(d.clone());
                 }
             }
         }
@@ -202,15 +205,12 @@ fn solve_entry(entry: &Entry) -> u64 {
                 continue;
             }
 
-            let ps = patterns
-                .iter()
-                .filter(|&p1| {
-                    solved
-                        .iter()
-                        .find(|&p2| p1.wiring.segments == p2.wiring.segments)
-                        .is_none()
-                });
-
+            let ps = patterns.iter().filter(|&p1| {
+                solved
+                    .iter()
+                    .find(|&p2| p1.wiring.segments == p2.wiring.segments)
+                    .is_none()
+            });
 
             let mut possible = Vec::new();
             for pattern in ps {
@@ -236,36 +236,31 @@ fn solve_entry(entry: &Entry) -> u64 {
                             possible.push(pattern.clone());
                         }
                     }
-                }
-                else if *digit == 2 {
+                } else if *digit == 2 {
                     if let &[Some(one), Some(four), Some(seven)] = &common_segments {
                         if one >= 1 && four >= 2 && seven >= 2 {
                             possible.push(pattern.clone());
                         }
                     }
-                }
-                else if *digit == 3 {
+                } else if *digit == 3 {
                     if let &[Some(one), Some(four), Some(seven)] = &common_segments {
                         if one >= 2 && four >= 3 && seven >= 2 {
                             possible.push(pattern.clone());
                         }
                     }
-                }
-                else if *digit == 5 {
+                } else if *digit == 5 {
                     if let &[Some(one), Some(four), Some(seven)] = &common_segments {
                         if one >= 1 && four >= 3 && seven >= 2 {
                             possible.push(pattern.clone());
                         }
                     }
-                }
-                else if *digit == 6 {
+                } else if *digit == 6 {
                     if let &[Some(one), Some(four), Some(seven)] = &common_segments {
                         if one >= 1 && four >= 3 && seven >= 2 {
                             possible.push(pattern.clone());
                         }
                     }
-                }
-                else if *digit == 9 {
+                } else if *digit == 9 {
                     if let &[Some(one), Some(four), Some(seven)] = &common_segments {
                         if one >= 2 && four >= 4 && seven >= 3 {
                             possible.push(pattern.clone());
@@ -278,7 +273,6 @@ fn solve_entry(entry: &Entry) -> u64 {
         }
     }
 
-
     let digits = known_digits.values().collect::<Vec<_>>();
     let mut result = 0u64;
     let mut mul = 1;
@@ -287,12 +281,10 @@ fn solve_entry(entry: &Entry) -> u64 {
             Some(value) => value,
             None => {
                 let len = digit.wiring.segments.len();
-                let d = digits
-                    .iter()
-                    .find(|&&d| {
-                        let common = d.common_segments(digit);
-                        len == common.len() && len == d.wiring.segments.len()
-                    });
+                let d = digits.iter().find(|&&d| {
+                    let common = d.common_segments(digit);
+                    len == common.len() && len == d.wiring.segments.len()
+                });
 
                 d.unwrap().value.unwrap()
             }
@@ -304,7 +296,6 @@ fn solve_entry(entry: &Entry) -> u64 {
 
     result
 }
-
 
 impl Solver for Day8 {
     fn name(&self) -> &'static str {
@@ -318,8 +309,7 @@ impl Solver for Day8 {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| SolverError::Generic(e.into()))?;
 
-        let unique_output_digits: usize =
-            entries
+        let unique_output_digits: usize = entries
             .iter()
             .map(|e| e.output.iter().filter(|d| d.is_unique()).count())
             .sum();

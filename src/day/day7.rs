@@ -19,8 +19,7 @@ impl Solver for Day7 {
         let median_idx = (positions.len() + 1) / 2;
         let median = positions[median_idx] as i64;
 
-        let spent_fuel: u64 =
-            positions
+        let spent_fuel: u64 = positions
             .iter()
             .map(|x| (*x as i64 - median).abs() as u64)
             .sum();
@@ -83,6 +82,6 @@ impl Solver for Day7 {
     }
 }
 
-pub (super) fn new() -> Box<dyn Solver> {
+pub(super) fn new() -> Box<dyn Solver> {
     Box::new(Day7)
 }

@@ -85,22 +85,17 @@ impl Diagram {
             let mut y_i = 0;
 
             while cur != end {
-                let new_x = if x1 > x2 {
-                    x1 - x_i
-                } else {
-                    x1 + x_i
-                };
+                let new_x = if x1 > x2 { x1 - x_i } else { x1 + x_i };
 
-                let new_y = if y1 > y2 {
-                    y1 - y_i
-                } else {
-                    y1 + y_i
-                };
+                let new_y = if y1 > y2 { y1 - y_i } else { y1 + y_i };
 
                 x_i += 1;
                 y_i += 1;
 
-                cur = Point{x: new_x as u64, y: new_y as u64};
+                cur = Point {
+                    x: new_x as u64,
+                    y: new_y as u64,
+                };
                 self.incr(new_x, new_y);
             }
         }
