@@ -12,6 +12,7 @@ use std::iter::Iterator;
 
 mod day1;
 mod day10;
+mod day11;
 mod day2;
 mod day3;
 mod day4;
@@ -59,6 +60,7 @@ pub(super) fn name(day: usize) -> Option<&'static str> {
         day8::new(),
         day9::new(),
         day10::new(),
+        day11::new(),
     ];
 
     days.get(day - 1).map(|d| d.name())
@@ -80,6 +82,7 @@ fn prepare_solver<P: AsRef<Path>, Fn: FnOnce(PreparedSolver) -> SolverResult>(
         day8::new(),
         day9::new(),
         day10::new(),
+        day11::new(),
     ];
 
     let file = fs::File::open(path.as_ref())
