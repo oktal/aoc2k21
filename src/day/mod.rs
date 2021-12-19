@@ -14,6 +14,7 @@ mod day1;
 mod day10;
 mod day11;
 mod day12;
+mod day13;
 mod day2;
 mod day3;
 mod day4;
@@ -63,6 +64,7 @@ pub(super) fn name(day: usize) -> Option<&'static str> {
         day10::new(),
         day11::new(),
         day12::new(),
+        day13::new(),
     ];
 
     days.get(day - 1).map(|d| d.name())
@@ -86,6 +88,7 @@ fn prepare_solver<P: AsRef<Path>, Fn: FnOnce(PreparedSolver) -> SolverResult>(
         day10::new(),
         day11::new(),
         day12::new(),
+        day13::new(),
     ];
 
     let file = fs::File::open(path.as_ref())
