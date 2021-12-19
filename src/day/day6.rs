@@ -90,13 +90,6 @@ impl Spawns {
 }
 
 impl BinaryLanternFish {
-    fn from(timers: &[u8]) -> BinaryLanternFish {
-        BinaryLanternFish {
-            timers: timers.try_into().unwrap(),
-            len: timers.len(),
-        }
-    }
-
     fn count(&self) -> usize {
         self.len
     }
@@ -116,15 +109,6 @@ impl BinaryLanternFish {
             None
         } else {
             Some(spawns)
-        }
-    }
-
-    fn print(&self) {
-        for (idx, timer) in self.timers.iter().take(self.len).enumerate() {
-            if idx > 0 {
-                print!(",");
-            }
-            print!("{}", timer);
         }
     }
 }
@@ -155,7 +139,7 @@ fn solve_v1(lines: Vec<String>, days: usize) -> SolverResult {
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| SolverError::Generic(e.into()))?;
 
-    (0..days).for_each(|d| {
+    (0..days).for_each(|_| {
         let new_fishes: Vec<_> = fishes.iter_mut().filter_map(|f| f.spawn()).collect();
         fishes.extend(new_fishes);
     });
