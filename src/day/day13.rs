@@ -9,7 +9,7 @@ enum FoldInstruction {
     X(usize),
 
     // fold y=value
-    Y(usize)
+    Y(usize),
 }
 
 impl FromStr for FoldInstruction {
@@ -25,7 +25,9 @@ impl FromStr for FoldInstruction {
         let instruction = &s[PREFIX.len()..];
         let mut split = instruction.split('=');
 
-        let axe = split.next().ok_or("Missing instruction for fold instruction")?;
+        let axe = split
+            .next()
+            .ok_or("Missing instruction for fold instruction")?;
         let value = split.next().ok_or("Missing value for fold instruction")?;
 
         let axe = axe.to_lowercase();
@@ -33,12 +35,14 @@ impl FromStr for FoldInstruction {
             return Err("Invalid axe for fold instruction");
         }
 
-        let value = value.parse::<usize>().map_err(|_| "Invalid value for fold instruction")?;
+        let value = value
+            .parse::<usize>()
+            .map_err(|_| "Invalid value for fold instruction")?;
 
         match axe.as_str() {
             "x" => Ok(FoldInstruction::X(value)),
             "y" => Ok(FoldInstruction::Y(value)),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
@@ -50,10 +54,7 @@ struct Index(usize, usize);
 enum Instruction {
     Keep(Index),
 
-    Fold {
-        from: Index,
-        to: Index
-    }
+    Fold { from: Index, to: Index },
 }
 
 impl FoldInstruction {
@@ -69,25 +70,23 @@ impl FoldInstruction {
                         } else {
                             Instruction::Fold {
                                 from: Index(x, y),
-                                to: Index(x, fold_y - (y - fold_y))
+                                to: Index(x, fold_y - (y - fold_y)),
                             }
                         }
                     }
                     FoldInstruction::X(fold_x) => {
                         if x < *fold_x {
                             Instruction::Keep(Index(x, y))
-                        }
-                        else {
+                        } else {
                             Instruction::Fold {
                                 from: Index(x, y),
-                                to: Index(fold_x - (x - fold_x), y)
+                                to: Index(fold_x - (x - fold_x), y),
                             }
                         }
                     }
                 };
 
                 instructions.push(instruction);
-
             }
         }
 
@@ -98,7 +97,7 @@ impl FoldInstruction {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Point {
     Dot,
-    Invisible
+    Invisible,
 }
 
 #[derive(Debug)]
@@ -107,7 +106,7 @@ struct Grid {
 
     width: usize,
 
-    height: usize
+    height: usize,
 }
 
 impl Grid {
@@ -115,7 +114,7 @@ impl Grid {
         Grid {
             points: vec![Point::Invisible; width * height],
             width,
-            height
+            height,
         }
     }
 
@@ -131,7 +130,7 @@ impl Grid {
     fn apply(self, instruction: FoldInstruction) -> Grid {
         let (new_width, new_height) = match instruction {
             FoldInstruction::X(x) => (x, self.height),
-            FoldInstruction::Y(y) => (self.width, y)
+            FoldInstruction::Y(y) => (self.width, y),
         };
 
         let mut folded_grid = Grid::with_capacity(new_width, new_height);
@@ -142,7 +141,7 @@ impl Grid {
                     let idx = index.1 + index.0 * self.height;
                     let new_idx = index.1 + index.0 * new_height;
                     folded_grid.points[new_idx] = self.points[idx];
-                },
+                }
                 Instruction::Fold { from, to } => {
                     let idx_from = from.1 + from.0 * self.height;
 
@@ -157,7 +156,10 @@ impl Grid {
     }
 
     fn parse(lines: Vec<String>) -> Result<(Grid, Vec<FoldInstruction>), SolverError> {
-        enum ParsingState { Coord, FoldInstruction }
+        enum ParsingState {
+            Coord,
+            FoldInstruction,
+        }
 
         let mut state = ParsingState::Coord;
 
@@ -177,11 +179,19 @@ impl Grid {
                 ParsingState::Coord => {
                     let mut split = line.split(",");
 
-                    let x = split.next().ok_or(SolverError::Generic("Missing x coordinate".into()))?;
-                    let y = split.next().ok_or(SolverError::Generic("Missing y coordinate".into()))?;
+                    let x = split
+                        .next()
+                        .ok_or(SolverError::Generic("Missing x coordinate".into()))?;
+                    let y = split
+                        .next()
+                        .ok_or(SolverError::Generic("Missing y coordinate".into()))?;
 
-                    let x = x.parse::<u64>().map_err(|e| SolverError::Generic(e.into()))?;
-                    let y = y.parse::<u64>().map_err(|e| SolverError::Generic(e.into()))?;
+                    let x = x
+                        .parse::<u64>()
+                        .map_err(|e| SolverError::Generic(e.into()))?;
+                    let y = y
+                        .parse::<u64>()
+                        .map_err(|e| SolverError::Generic(e.into()))?;
 
                     if x > max_x {
                         max_x = x;
@@ -194,7 +204,8 @@ impl Grid {
                     coords.push((x, y));
                 }
                 ParsingState::FoldInstruction => {
-                    let instruction = FoldInstruction::from_str(line.as_str()).map_err(|e| SolverError::Generic(e.into()))?;
+                    let instruction = FoldInstruction::from_str(line.as_str())
+                        .map_err(|e| SolverError::Generic(e.into()))?;
                     instructions.push(instruction)
                 }
             };
@@ -203,7 +214,8 @@ impl Grid {
         let mut grid = Grid::with_capacity(max_x as usize + 1, max_y as usize + 1);
 
         for coord in coords {
-            grid.add(coord.0 as usize, coord.1 as usize).expect("Should have been able to add the point");
+            grid.add(coord.0 as usize, coord.1 as usize)
+                .expect("Should have been able to add the point");
         }
 
         Ok((grid, instructions))
@@ -219,7 +231,7 @@ impl fmt::Display for Grid {
 
                 match point {
                     Point::Dot => f.write_char('#')?,
-                    Point::Invisible => f.write_char('.')?
+                    Point::Invisible => f.write_char('.')?,
                 }
             }
             print!("\n");
@@ -238,10 +250,17 @@ impl Solver for Day13 {
 
     fn solve_part1(&self, lines: Vec<String>) -> SolverResult {
         let (grid, instructions) = Grid::parse(lines)?;
-        let first_instruction = instructions.get(0).ok_or("Empty fold instructions").map_err(|e| SolverError::Generic(e.into()))?;
+        let first_instruction = instructions
+            .get(0)
+            .ok_or("Empty fold instructions")
+            .map_err(|e| SolverError::Generic(e.into()))?;
 
         let grid = grid.apply(*first_instruction);
-        let visible_points = grid.points.iter().filter(|p| matches!(p, Point::Dot)).count();
+        let visible_points = grid
+            .points
+            .iter()
+            .filter(|p| matches!(p, Point::Dot))
+            .count();
         Ok(visible_points.to_string())
     }
 
